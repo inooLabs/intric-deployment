@@ -21,6 +21,8 @@
   - `kubectl create namespace intric`
 - You will be given a values-override.yaml file. Alter it as needed.
   - You can search for `REPLACE_THIS` to see fields that crucially need to be replaced
+- [If manually creating tls certificates]: Manually create the tls certificates
+  - Refer to the [Domain Configuration] section of the values-override.yaml
 - Install the chart
   - `helm install intric KEIII-REPLACE-THIS-AFTER-THE-CI-STUFF -n intric -f ./values-override.yaml`
 - Get a Personal Access Token from Zitadel
