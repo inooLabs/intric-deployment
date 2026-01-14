@@ -1,0 +1,174 @@
+# Intric Helm Chart - Override Values Example
+# Copy this file to values-override.yaml and customize for your deployment
+# Deploy with: helm install intric ./helm/intric -f values-override.yaml
+
+# =============================================================================
+# REQUIRED: Basic Configuration
+# =============================================================================
+
+global:
+  clientName: YOUR-REPLACE_THIS-NAME
+
+# GitHub Container Registry credentials for pulling images
+ghcrCredentials:
+  username: REPLACE_THIS
+  password: REPLACE_THIS
+
+# =============================================================================
+# REQUIRED: Domain Configuration
+# =============================================================================
+# ----- with clusterIssuer [RECOMMENDED] -----
+ingress:
+  enabled: true
+  className: traefik # kubectl get ingressclasses - to see available ingress classes
+  frontendHost: REPLACE_THIS
+  backendHost: REPLACE_THIS
+  zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL
+  
+  tls:
+    enabled: true
+  
+  certManager:
+    enabled: true
+    clusterIssuer: REPLACE_THIS_WITH_YOUR_CLUSTER_ISSUER # kubectl get clusterissuer - to see available cluster issuers
+# ----------------------------------------------------------------------------
+# NOTE: If using manually created certificates:
+# Add the certs to their respective secret names
+# example for frontendSecretName:
+# kubectl create secret tls intric-frontend-tls \
+#   --cert=frontendtls.crt \
+#   --key=frontendtls.key \
+#   -n test
+
+# ----- without clusterIssuer [MANUAL CERTIFICATES] -----
+# ingress:
+#   enabled: true
+#   className: traefik
+#   frontendHost: REPLACE_THIS
+#   backendHost: REPLACE_THIS
+#   zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL
+  
+#   tls:
+#     enabled: true
+#     frontendSecretName: intric-frontend-tls
+#     backendSecretName: intric-backend-tls
+#     zitadelSecretName: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL
+    
+#   certManager:
+#     enabled: false
+# ----------------------------------------------------------------------------
+
+# =============================================================================
+# OPTIONAL: Zitadel Configuration (disable this if you're using external Zitadel)
+# =============================================================================
+
+zitadel:
+  enabled: true
+  externalDomain: REPLACE_THIS_WITH_YOUR_ZITADEL_DOMAIN
+  
+  firstInstance:
+    orgName: REPLACE_THIS
+    admin:
+      # email for the admin user will become
+      # username@orgName.externalDoman
+      # root@REPLACE-ME.sample.zitadel.domain.com
+      username: REPLACE_THIS
+      password: "REPLACE_THIS"
+
+  masterkey: "REPLACE_THIS_WITH_A_32_CHARACTER_MASTER_KEY"
+
+# =============================================================================
+# OPTIONAL: Backend API Server Configuration
+# Override any of these values as needed
+# =============================================================================
+
+intricBackendApiServer:
+  # ---------------------------------------------------------------------------
+  # OCR Configuration (You can replace this with your own hosted OCR model)
+  # ---------------------------------------------------------------------------
+  imageToTextVisionModelUrl: REPLACE_THIS
+  imageToTextVisionModelName: REPLACE_THIS
+  imageToTextVisionModelApiKey: REPLACE_THIS
+
+  # ---------------------------------------------------------------------------
+  # Authentication (Required)
+  # ---------------------------------------------------------------------------
+  usingZitadel: true
+  usingIam: true
+  zitadelEndpoint: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelOpenidConfigEndpoint: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelProjectClientId: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelProjectId: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelAccessToken: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelKeyEndpoint: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  zitadelAudience: REPLACE_THIS_ONLY_IF_YOU_ALREADY_HAVE_PRE_MADE_ZITADEL_RESOURCES_OTHERWISE_DO_NOT_TOUCH
+  
+  # ---------------------------------------------------------------------------
+  # General Settings (Optional)
+  # ---------------------------------------------------------------------------
+  # dev: false
+  # numWorkers: 1
+  # loglevel: INFO
+  # intricCorsAllowAll: 1
+  # maxInQuestion: 20
+  
+  # ---------------------------------------------------------------------------
+  # Paragon Integration
+  # ---------------------------------------------------------------------------
+  paragonProjectId: REPLACE_THIS
+  paragonPrivateKey: REPLACE_THIS
+  
+  # ---------------------------------------------------------------------------
+  # File Upload Limits (Optional - bytes)
+  # ---------------------------------------------------------------------------
+  # uploadFileToSessionMaxSize: 26214400      # 25 MB
+  # uploadImageToSessionMaxSize: 20971520     # 20 MB
+  # uploadMaxFileSize: 20971520               # 20 MB
+  # transcriptionMaxFileSize: 209715200       # 200 MB
+  
+  # ---------------------------------------------------------------------------
+  # API KEYS
+  # ---------------------------------------------------------------------------
+  openaiApiKey: REPLACE_THIS
+  anthropicApiKey: REPLACE_THIS
+  ovhcloudApiKey: REPLACE_THIS
+  tavilyApiKey: REPLACE_THIS
+  mistralApiKey: REPLACE_THIS
+  vllmApiKey: REPLACE_THIS
+  bergetApiKey: REPLACE_THIS
+  exaApiKey: REPLACE_THIS
+  scalewayModelProviderApiKey: REPLACE_THIS
+  linkupApiKey: REPLACE_THIS
+  
+  # ---------------------------------------------------------------------------
+  # Security Keys (Required - generate strong random keys)
+  # ---------------------------------------------------------------------------
+  sandboxedPythonScriptRunnerAuthToken: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
+  intricSuperApiKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
+  intricSuperDuperApiKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
+  urlSigningKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
+  
+  # ---------------------------------------------------------------------------
+  # Third-party Integrations
+  # ---------------------------------------------------------------------------
+  confluenceClientId: "REPLACE_THIS"
+  confluenceClientSecret: "REPLACE_THIS"
+  sharepointClientId: "REPLACE_THIS"
+  sharepointClientSecret: "REPLACE_THIS"
+
+# =============================================================================
+# OPTIONAL: Database Configuration
+# Only override if you need to change defaults
+# =============================================================================
+
+# postgresql:
+#   auth:
+#     password: REPLACE_THIS
+#   persistence:
+#     size: 20Gi
+
+# zitadel-postgres:
+#   auth:
+#     password: REPLACE_THIS
+#   persistence:
+#     size: 10Gi
