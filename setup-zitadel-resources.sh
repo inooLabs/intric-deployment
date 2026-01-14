@@ -264,7 +264,7 @@ if [ "$SKIP_CREATION" = "false" ]; then
             -d "{
                 \"name\": \"$PROJECT_NAME\",
                 \"projectRoleAssertion\": true,
-                \"projectRoleCheck\": true,
+                \"projectRoleCheck\": false,
                 \"hasProjectCheck\": true,
                 \"privateLabelingSetting\": \"PRIVATE_LABELING_SETTING_ENFORCE_PROJECT_RESOURCE_OWNER_POLICY\"
             }")
