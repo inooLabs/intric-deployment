@@ -7,7 +7,7 @@
 # =============================================================================
 
 global:
-  clientName: YOUR-REPLACE_THIS-NAME
+  clientName: REPLACE_THIS_WITH_CLIENT_NAME
 
 # GitHub Container Registry credentials for pulling images
 ghcrCredentials:
@@ -21,7 +21,7 @@ ghcrCredentials:
 ingress:
   enabled: true
   className: traefik # kubectl get ingressclasses - to see available ingress classes
-  frontendHost: REPLACE_THIS
+  frontendHost: REPLACE_THIS # ex: abc.intric.ai
   backendHost: REPLACE_THIS
   zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL
   
@@ -69,10 +69,9 @@ zitadel:
   firstInstance:
     orgName: REPLACE_THIS
     admin:
-      # email for the admin user will become
-      # username@orgName.externalDoman
-      # root@REPLACE-ME.sample.zitadel.domain.com
-      username: REPLACE_THIS
+      # email for the admin user will become this format: username@orgName.externalDoman
+      # REPLACE_THIS@REPLACE_THIS.sample.zitadel.domain.com
+      username: "REPLACE_THIS"
       password: "REPLACE_THIS"
 
   masterkey: "REPLACE_THIS_WITH_A_32_CHARACTER_MASTER_KEY"
@@ -113,12 +112,6 @@ intricBackendApiServer:
   # maxInQuestion: 20
   
   # ---------------------------------------------------------------------------
-  # Paragon Integration
-  # ---------------------------------------------------------------------------
-  paragonProjectId: REPLACE_THIS
-  paragonPrivateKey: REPLACE_THIS
-  
-  # ---------------------------------------------------------------------------
   # File Upload Limits (Optional - bytes)
   # ---------------------------------------------------------------------------
   # uploadFileToSessionMaxSize: 26214400      # 25 MB
@@ -131,13 +124,9 @@ intricBackendApiServer:
   # ---------------------------------------------------------------------------
   openaiApiKey: REPLACE_THIS
   anthropicApiKey: REPLACE_THIS
-  ovhcloudApiKey: REPLACE_THIS
-  tavilyApiKey: REPLACE_THIS
   mistralApiKey: REPLACE_THIS
   vllmApiKey: REPLACE_THIS
   bergetApiKey: REPLACE_THIS
-  exaApiKey: REPLACE_THIS
-  scalewayModelProviderApiKey: REPLACE_THIS
   linkupApiKey: REPLACE_THIS
   
   # ---------------------------------------------------------------------------
@@ -145,17 +134,7 @@ intricBackendApiServer:
   # ---------------------------------------------------------------------------
   sandboxedPythonScriptRunnerAuthToken: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
   intricSuperApiKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
-  intricSuperDuperApiKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
-  urlSigningKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
-  
-  # ---------------------------------------------------------------------------
-  # Third-party Integrations
-  # ---------------------------------------------------------------------------
-  confluenceClientId: "REPLACE_THIS"
-  confluenceClientSecret: "REPLACE_THIS"
-  sharepointClientId: "REPLACE_THIS"
-  sharepointClientSecret: "REPLACE_THIS"
-
+  urlSigningKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED
 # =============================================================================
 # OPTIONAL: Database Configuration
 # Only override if you need to change defaults
