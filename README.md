@@ -24,7 +24,7 @@
   - You can search for `REPLACE_THIS` to see fields that crucially need to be replaced
 - [If manually creating tls certificates]: Manually create the tls certificates
   - Refer to the [Domain Configuration] section of the values-override.yaml
-- [Retrieve the available versions]((#-checking-available-versions))
+- [Retrieve the available versions](#-checking-available-versions)
 - Install the chart
   - `helm install intric oci://ghcr.io/inoolabs/charts/intric-helm -n intric -f ./values-override.yaml --version INSERT_VERION_HERE`
 - Verify that everything is ready
@@ -57,7 +57,7 @@ Note:
 - if you're using the bundled self-hosted zitadel, you will want to set it up with things like smtp and other supported login methods
 
 ## 📦 Retrieve available versions
-`./get-available-version.sh --token $GITHUB_TOKEN`
+`./get-available-versions.sh --token $GITHUB_TOKEN`
 
 ## How to update the app
 - Check the version you have with `helm list`
