@@ -13,9 +13,13 @@
   - Run `kubectl get ClusterIssuer` to see if you already have one
     - There are a lot of ways like [these](https://cert-manager.io/docs/getting-started/) to set one up
   - Without this, you'll have to manually create and manage your tls certificates
+- jq (if you type `jq` in your terminal, it should exist)
 
 
 ## 🚀 Quick Start
+- Clone this repository
+  - `git clone git@github.com:inooLabs/intric-deployment.git`
+- get into the cloned repository
 - Authenticate helm
   - `helm registry login ghcr.io -u USERNAME -p $GITHUB_TOKEN`
 - [Recommended] Create a namespace for the resources
@@ -61,6 +65,7 @@ Note:
 
 ## How to update the app
 - Check the version you have with `helm list`
+  - the version to take note of is the one under the chart column
 - [Retrieve the available versions](#-checking-available-versions)
 - `helm upgrade intric oci://ghcr.io/inoolabs/charts/intric-helm -n INSERT_NAMESPACE_HERE -f ./modified-values-override.yaml --version INSERT_VERSION_TO_UPDATE_TO_HERE`
 
