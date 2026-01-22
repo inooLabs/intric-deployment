@@ -7,8 +7,8 @@
 - Persistent volume provisioner
   - Run `kubectl get storageclass` to see if you already have one
 - Device limits
-  - Minimum: 4 CPU cores, 8GB RAM, 1TB storage
-  - Preferred for long-term usage or for large userbases: 6 CPU cores, 16GB, 2TB storage
+  - Minimum: 8 CPU cores, 8GB RAM, 1TB storage
+  - Preferred for long-term usage or for large userbases: 16 CPU cores, 16GB, 2TB storage
 - [Recommended] [Cluster Issuer or Issuer](https://cert-manager.io/docs/concepts/issuer/)
   - Run `kubectl get ClusterIssuer` to see if you already have one
     - There are a lot of ways like [these](https://cert-manager.io/docs/getting-started/) to set one up
