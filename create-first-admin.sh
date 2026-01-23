@@ -229,7 +229,8 @@ CREATE_TENANT_RESPONSE=$(curl -ksS -w "\n%{http_code}" -X POST "$BACKEND_URL/api
     -H "api-key: $SUPER_API_KEY" \
     -d "{
         \"name\": \"$ORGANIZATION_NAME\",
-        \"zitadel_org_id\": \"$ZITADEL_ORG_ID\"
+        \"zitadel_org_id\": \"$ZITADEL_ORG_ID\",
+        \"tags\": []
     }")
 
 HTTP_CODE=$(echo "$CREATE_TENANT_RESPONSE" | tail -n 1)

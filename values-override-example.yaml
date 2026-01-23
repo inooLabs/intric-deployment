@@ -77,6 +77,17 @@ zitadel:
   masterkey: "REPLACE_THIS_WITH_A_32_CHARACTER_MASTER_KEY"
 
 # =============================================================================
+# REQUIRED: S3 Object Storage Configuration (RustFS)
+# =============================================================================
+s3:
+  accessKeyId: "REPLACE_THIS"
+  secretAccessKey: "REPLACE_THIS"
+  bucketName: "REPLACE_THIS"
+
+  # persistence:
+  #   size: "REPLACE_THIS_IF_YOU_WANT_DEFAULT_IS_100Gi"
+
+# =============================================================================
 # OPTIONAL: Backend API Server Configuration
 # Override any of these values as needed
 # =============================================================================
