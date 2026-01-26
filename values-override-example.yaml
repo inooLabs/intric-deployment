@@ -5,10 +5,6 @@
 # =============================================================================
 # REQUIRED: Basic Configuration
 # =============================================================================
-
-global:
-  clientName: REPLACE_THIS_WITH_CLIENT_NAME
-
 # GitHub Container Registry credentials for pulling images
 ghcrCredentials:
   username: REPLACE_THIS
@@ -145,7 +141,7 @@ intricBackendApiServer:
   # ---------------------------------------------------------------------------
   sandboxedPythonScriptRunnerAuthToken: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
   intricSuperApiKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
-  urlSigningKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED
+  urlSigningKey: "REPLACE_THIS_WITH_SOMETHING_GENERATED"
 # =============================================================================
 # OPTIONAL: Database Configuration
 # Only override if you need to change defaults
