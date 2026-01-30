@@ -26,6 +26,7 @@
   - `kubectl create namespace intric`
 - You will be given a values-override.yaml file. Alter it as needed.
   - You can search for `REPLACE_THIS` to see fields that crucially need to be replaced
+  - Note that the values-override.yaml file will be the bare configuration, to see how you can configure the app more in depth, try `helm show values oci://ghcr.io/inoolabs/charts/intric-helm`
 - [If manually creating tls certificates]: Manually create the tls certificates
   - Refer to the [Domain Configuration] section of the values-override.yaml
 - [Retrieve the available versions](#-checking-available-versions)
@@ -40,7 +41,7 @@
   - visit your instantiated zitadel host
   - login
     - if using the bundled self-hosted zitadel:
-      - credentials for the login user can be found in zitadel.firstInstance.admin of the values-overrides.yaml file
+      - credentials for the initial login user can be found in zitadel.firstInstance.admin of the values-overrides.yaml file
   - create a PAT token
     - head to the users tab
     - go to "service users"

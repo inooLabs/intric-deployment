@@ -351,36 +351,43 @@ awk -v zitadel_endpoint="$ZITADEL_URL" \
     -v project_id="$PROJECT_ID" \
     -v client_id="$CLIENT_ID" \
     -v pat="$ZITADEL_PAT" '
-BEGIN { in_backend_section = 0 }
+BEGIN { in_backend_section = 0; in_env_section = 0 }
+# Detect when we enter intricBackendApiServer section
 /^intricBackendApiServer:/ { in_backend_section = 1 }
-/^[a-zA-Z]/ && !/^intricBackendApiServer:/ && in_backend_section { in_backend_section = 0 }
+# Exit backend section when we hit another top-level key (no leading spaces)
+/^[a-zA-Z]/ && !/^intricBackendApiServer:/ && in_backend_section { in_backend_section = 0; in_env_section = 0 }
+# Enter env section when we find "  env:" (2 spaces indent)
+in_backend_section && /^  env:/ { in_env_section = 1 }
+# Exit env section when we hit another key at the same level as env (2 spaces, but not part of env content)
+# This pattern looks for lines starting with exactly 2 spaces followed by a letter and colon (sibling to env:)
+in_backend_section && /^  [a-zA-Z][^:]*:/ && !/^  env:/ && in_env_section { in_env_section = 0 }
 
-in_backend_section && /zitadelEndpoint:/ {
-    print "  zitadelEndpoint: " zitadel_endpoint
+in_env_section && /zitadelEndpoint:/ {
+    print "    zitadelEndpoint: " zitadel_endpoint
     next
 }
-in_backend_section && /zitadelOpenidConfigEndpoint:/ {
-    print "  zitadelOpenidConfigEndpoint: " zitadel_endpoint "/.well-known/openid-configuration"
+in_env_section && /zitadelOpenidConfigEndpoint:/ {
+    print "    zitadelOpenidConfigEndpoint: " zitadel_endpoint "/.well-known/openid-configuration"
     next
 }
-in_backend_section && /zitadelProjectClientId:/ {
-    print "  zitadelProjectClientId: \"" client_id "\""
+in_env_section && /zitadelProjectClientId:/ {
+    print "    zitadelProjectClientId: \"" client_id "\""
     next
 }
-in_backend_section && /zitadelProjectId:/ {
-    print "  zitadelProjectId: \"" project_id "\""
+in_env_section && /zitadelProjectId:/ {
+    print "    zitadelProjectId: \"" project_id "\""
     next
 }
-in_backend_section && /zitadelKeyEndpoint:/ {
-    print "  zitadelKeyEndpoint: " zitadel_endpoint "/oauth/v2/keys"
+in_env_section && /zitadelKeyEndpoint:/ {
+    print "    zitadelKeyEndpoint: " zitadel_endpoint "/oauth/v2/keys"
     next
 }
-in_backend_section && /zitadelAudience:/ {
-    print "  zitadelAudience: \"" client_id "\""
+in_env_section && /zitadelAudience:/ {
+    print "    zitadelAudience: \"" client_id "\""
     next
 }
-in_backend_section && /zitadelAccessToken:/ {
-    print "  zitadelAccessToken: " pat
+in_env_section && /zitadelAccessToken:/ {
+    print "    zitadelAccessToken: " pat
     next
 }
 { print }

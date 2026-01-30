@@ -144,7 +144,6 @@ if [ -n "$ZITADEL_HOST" ]; then
     ZITADEL_URL="https://${ZITADEL_HOST}"
     success "Using provided Zitadel host: $ZITADEL_HOST"
 else
-    # Extract Zitadel URL from intricBackendApiServer.zitadelEndpoint
     ZITADEL_URL=$(grep "zitadelEndpoint:" "$OVERRIDE_FILE" | head -1 | sed 's/.*zitadelEndpoint: *//' | tr -d '"' | tr -d ' ')
 
     if [ -z "$ZITADEL_URL" ]; then
@@ -156,7 +155,6 @@ fi
 
 success "Zitadel URL: $ZITADEL_URL"
 
-# Extract Super API Key
 SUPER_API_KEY=$(grep "intricSuperApiKey:" "$OVERRIDE_FILE" | head -1 | sed 's/.*intricSuperApiKey: *//' | sed 's/^"\(.*\)"$/\1/' | tr -d ' ')
 
 if [ -z "$SUPER_API_KEY" ]; then
@@ -174,6 +172,11 @@ info "Fetching Zitadel organization information..."
 ME_RESPONSE=$(curl -s -X GET "${ZITADEL_URL}/auth/v1/users/me" \
     -H "Authorization: Bearer ${ZITADEL_PAT}" \
     -H "Content-Type: application/json")
+
+# echo response, url, and pat
+echo "Response: $ME_RESPONSE"
+echo "URL: $ZITADEL_URL"
+echo "PAT: $ZITADEL_PAT"
 
 ZITADEL_ORG_ID=$(echo "$ME_RESPONSE" | jq -r '.user.details.resourceOwner' 2>/dev/null)
 
