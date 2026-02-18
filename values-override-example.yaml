@@ -1,292 +1,303 @@
 # Intric Helm Chart - Override Values Example
 # Copy this file to values-override.yaml and customize for your deployment
 # Deploy with: helm install intric ./intric-helm -f values-override.yaml
+# NOTE: values.yaml now uses list-style env (name/value). Overriding env replaces the full list.
 
 # =============================================================================
-# OPTIONAL: Image Pull Credentials for Intric's Container Registry
-# Only required if pulling from private repositories
+# REQUIRED: Image Pull Credentials
 # =============================================================================
-# intricImagePullCredentials:
-#   registry: ghcr.io
-#   username: "REPLACE_THIS"
-#   password: "REPLACE_THIS"
+intricImagePullCredentials:
+  registry: ghcr.io
+  username: REPLACE_THIS
+  password: REPLACE_THIS
 
 # =============================================================================
 # REQUIRED: Domain Configuration
 # =============================================================================
-# ----- with clusterIssuer [RECOMMENDED] -----
 ingress:
   enabled: true
-  className: traefik # kubectl get ingressclasses - to see available ingress classes
-  frontendHost: REPLACE_THIS # ex: abc.intric.ai
-  backendHost: REPLACE_THIS  # ex: api.abc.intric.ai
-  zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL # ex: auth.abc.intric.ai
-  
+  className: traefik
+  frontendHost: REPLACE_THIS  # ex: company.intric.ai
+  backendHost: REPLACE_THIS  # ex: api.company.intric.ai
+  zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL  # ex: login.company.intric.ai
   tls:
     enabled: true
-  
   certManager:
     enabled: true
-    clusterIssuer: REPLACE_THIS_WITH_YOUR_CLUSTER_ISSUER # kubectl get clusterissuer - to see available cluster issuers
-# ----------------------------------------------------------------------------
-# NOTE: If using manually created certificates:
-# Add the certs to their respective secret names
-# example for frontendSecretName:
-# kubectl create secret tls intric-frontend-tls \
-#   --cert=frontendtls.crt \
-#   --key=frontendtls.key \
-#   -n YOUR_NAMESPACE
-
-# ----- without clusterIssuer [MANUAL CERTIFICATES] -----
-# ingress:
-#   enabled: true
-#   className: traefik
-#   frontendHost: REPLACE_THIS
-#   backendHost: REPLACE_THIS
-#   zitadelHost: REPLACE_THIS_ONLY_IF_YOU_ARE_SELF_HOSTING_ZITADEL
-  
-#   tls:
-#     enabled: true
-#     frontendSecretName: intric-frontend-tls
-#     backendSecretName: intric-backend-tls
-#     zitadelSecretName: zitadel-tls
-    
-#   certManager:
-#     enabled: false
-# ----------------------------------------------------------------------------
+    clusterIssuer: REPLACE_THIS_WITH_YOUR_CLUSTER_ISSUER  # kubectl get clusterissuer
 
 # =============================================================================
-# OPTIONAL: Redis Configuration
-# Override only if you need non-default settings
+# OPTIONAL: Zitadel Configuration
 # =============================================================================
-# redis:
-#   persistence:
-#     size: 16Gi  # Default is 8Gi
-#   resources:
-#     requests:
-#       cpu: 200m
-#       memory: 256Mi
+zitadel:
+  enabled: true
+  env:
+    - name: ZITADEL_MASTERKEY
+      value: "REPLACE_THIS_WITH_32_CHARACTER_KEY"  # Use: openssl rand -base64 32 | head -c 32
+    - name: ZITADEL_EXTERNALDOMAIN
+      value: "REPLACE_THIS"  # ex: login.company.intric.ai (without https://)
+    - name: ZITADEL_EXTERNALPORT
+      value: "443"
+    - name: ZITADEL_EXTERNALSECURE
+      value: "true"
+    - name: ZITADEL_TLS_ENABLED
+      value: "false"
+    - name: ZITADEL_DATABASE_POSTGRES_HOST
+      value: intric-zitadel-postgres
+    - name: ZITADEL_DATABASE_POSTGRES_PORT
+      value: "5432"
+    - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+      value: zitadel
+    - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+      value: postgres
+    - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+      value: postgres
+    - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
+      value: "disable"
+    - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+      value: zitadel
+    - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+      value: zitadel
+    - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+      value: "disable"
+    # zitadel username for logging in takes on the format of <username>@<org_name>.<external_domain>
+    - name: ZITADEL_FIRSTINSTANCE_ORG_NAME
+      value: "REPLACE_THIS"  # ex: mycompany
+    - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME
+      value: "REPLACE_THIS"  # ex: admin
+    - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
+      value: "REPLACE_THIS_WITH_STRONG_PASSWORD"
+    - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED
+      value: "false"
+    - name: ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED
+      value: "false"
+    - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME
+      value: admin
+    - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME
+      value: "Automatically Initialized IAM_OWNER"
+    - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE
+      value: "2029-01-01T00:00:00Z"
 
 # =============================================================================
-# OPTIONAL: PostgreSQL Configuration
-# Override only if you need non-default settings
+# REQUIRED: Redis Configuration
 # =============================================================================
-# postgresql:
-#   auth:
-#     username: postgres
-#     password: REPLACE_THIS_WITH_STRONG_PASSWORD
-#     database: intric
-#   persistence:
-#     size: 500Gi  # Default is 400Gi
+redis:
+  persistence:
+    size: 1Gi
 
 # =============================================================================
-# OPTIONAL: Zitadel PostgreSQL Configuration
-# Override only if you need non-default settings
+# REQUIRED: PostgreSQL Configuration
 # =============================================================================
-# zitadel-postgres:
-#   enabled: true
-#   auth:
-#     username: postgres
-#     password: REPLACE_THIS_WITH_STRONG_PASSWORD
-#     database: zitadel
-#   persistence:
-#     size: 16Gi  # Default is 8Gi
+postgresql:
+  persistence:
+    size: 1Gi
 
 # =============================================================================
 # REQUIRED: S3 Object Storage Configuration (RustFS)
-# If using external S3, set enabled: false and configure via backend secret
+# env is now a list of { name, value }; keys: RUSTFS_ACCESS_KEY, RUSTFS_SECRET_KEY, RUSTFS_CONSOLE_ENABLE
 # =============================================================================
 s3:
-  enabled: true
   env:
-    accessKeyId: "REPLACE_THIS"
-    secretAccessKey: "REPLACE_THIS"
-  
-  # Optional: Adjust storage size
-  # persistence:
-  #   size: 200Gi  # Default is 100Gi
+    - name: RUSTFS_ACCESS_KEY
+      value: "REPLACE_THIS"
+    - name: RUSTFS_SECRET_KEY
+      value: "REPLACE_THIS"
+    - name: RUSTFS_ADDRESS
+      value: "0.0.0.0:9000"
+    - name: RUSTFS_CONSOLE_ADDRESS
+      value: "0.0.0.0:9001"
+    - name: RUSTFS_CONSOLE_ENABLE
+      value: "true"
+  persistence:
+    size: 1Gi
 
 # =============================================================================
 # REQUIRED: Intric Backend API Server Configuration
+# Full env list (overriding replaces defaults). S3 credentials here must match s3.env above.
 # =============================================================================
 intricBackendApiServer:
-  # Image version (optional - leave commented to use default from values.yaml)
-  # image: ghcr.io/inoolabs/intric-backend:v1.145.0
-  
   env:
-    ##### OCR - OPTIONAL - Point this to your own hosted ocr model if you have one #####
-    # You can also ask Intric to give you access to intric's self-hosted ocr model
-    # Note that Intric's self-hosted ocr model is in Sweden
-    imageToTextVisionModelUrl: ""
-    imageToTextVisionModelName: ""
-    imageToTextVisionModelApiKey: ""
-    ##### OCR #####
-
-    ##### S3 #####
-    s3BucketName: "REPLACE_THIS"
-    ##### S3 #####
-
-    ##### FEATURE FLAGS #####
-    usingAccessManagement: true
-    usingCrawl: true
-    usingEmbeddingModelsWithUserGroups: true
-    usingBackgroundTasks: true
-    usingSelfSignUp: true
-    usingAllowCreatorsToCreateWidgets: true
-    usingApps: true
-    usingAzureModels: false
-    usingArtifacts: true
-    usingPlanning: true
-    ##### FEATURE FLAGS #####
-
-    ##### AUTHENTICATION #####
-    usingZitadel: true
-    usingIam: true
-    zitadelEndpoint: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelOpenidConfigEndpoint: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelProjectClientId: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelProjectId: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelAccessToken: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelKeyEndpoint: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    zitadelAudience: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
-    ##### AUTHENTICATION #####
-
-    ##### GENERAL SETTINGS #####
-    dev: false
-    numWorkers: 1
-    loglevel: INFO
-    intricCorsAllowAll: 1
-    maxInQuestion: 20
-    usingIntricProprietary: true
-    monitoringEnv: "development"
-    SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
-    ##### GENERAL SETTINGS #####
-
-    ##### LEGACY #####
-    confluenceClientId: ""
-    sharepointClientId: ""
-    apiPrefix: /api/v1
-    apiKeyLength: 32
-    apiKeyHeaderName: api-key
-    jwtAudience: beta
-    jwtIssuer: inoolabs.com
-    jwtExpiryTime: 10080
-    jwtAlgorithm: HS256
-    jwtSecret: ""
-    jwtTokenPrefix: "Bearer "
-    ##### LEGACY #####
-
-    ##### URLS #####
-    infinityUrl: https://infinity.intric.ai
-    vllmModelUrl: https://vllm.intric.ai
-    whisperModelUrl: https://whisper.intric.ai
-    scalewayModelProviderUrl: https://api.scaleway.ai/v1
-    oauthCallbackUrl: ""
-    sharepointWebhookUrl: ""
-    ##### URLS #####
-
-    ##### PARAGON #####
-    paragonProjectId: ""
-    usingParagon: false
-    ##### PARAGON #####
-
-    ##### BROWSER USE #####
-    browserUseUrl: ""
-    browserUseApiKey: ""
-    browserUseHeader: ""
-    ##### BROWSER USE #####
-
-    ##### MAX SIZES #####
-    uploadFileToSessionMaxSize: 26214400
-    uploadImageToSessionMaxSize: 20971520
-    uploadMaxFileSize: 20971520
-    transcriptionMaxFileSize: 209715200
-    ##### MAX SIZES #####
-
-    ##### API KEYS #####
-    openaiApiKey: ""
-    anthropicApiKey: ""
-    ovhcloudApiKey: ""
-    tavilyApiKey: ""
-    mistralApiKey: ""
-    vllmApiKey: ""
-    bergetApiKey: ""
-    exaApiKey: ""
-    scalewayModelProviderApiKey: ""
-    linkupApiKey: ""
-    sandboxedPythonScriptRunnerAuthToken: ""
-    intricSuperApiKey: ""
-    intricSuperDuperApiKey: ""
-    urlSigningKey: ""
-    confluenceClientSecret: ""
-    sharepointClientSecret: ""
-    paragonPrivateKey: ""
-    ##### API KEYS #####
+    - name: IMAGE_TO_TEXT_VISION_MODEL_URL
+      value: ""
+    - name: IMAGE_TO_TEXT_VISION_MODEL_NAME
+      value: ""
+    - name: IMAGE_TO_TEXT_VISION_MODEL_API_KEY
+      value: ""
+    - name: S3_BUCKET_NAME
+      value: "REPLACE_THIS"
+    - name: S3_ACCESS_KEY_ID
+      value: "REPLACE_THIS"
+    - name: S3_SECRET_ACCESS_KEY
+      value: "REPLACE_THIS"
+    - name: POSTGRES_USER
+      value: "postgres"
+    - name: POSTGRES_PASSWORD
+      value: "REPLACE_THIS_WITH_STRONG_PASSWORD"
+    - name: POSTGRES_DB
+      value: "intric"
+    - name: USING_ACCESS_MANAGEMENT
+      value: "true"
+    - name: USING_CRAWL
+      value: "true"
+    - name: USING_EMBEDDING_MODELS_WITH_USER_GROUPS
+      value: "true"
+    - name: USING_BACKGROUND_TASKS
+      value: "true"
+    - name: USING_SELF_SIGN_UP
+      value: "true"
+    - name: USING_ALLOW_CREATORS_TO_CREATE_WIDGETS
+      value: "true"
+    - name: USING_APPS
+      value: "true"
+    - name: USING_AZURE_MODELS
+      value: "false"
+    - name: USING_ARTIFACTS
+      value: "true"
+    - name: USING_PLANNING
+      value: "true"
+    - name: USING_ZITADEL
+      value: "true"
+    - name: USING_IAM
+      value: "true"
+    - name: ZITADEL_ENDPOINT
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_OPENID_CONFIG_ENDPOINT
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_PROJECT_CLIENT_ID
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_PROJECT_ID
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_ACCESS_TOKEN
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_KEY_ENDPOINT
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_AUDIENCE
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_ISSUER
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: DEV
+      value: "false"
+    - name: NUM_WORKERS
+      value: "1"
+    - name: LOGLEVEL
+      value: "INFO"
+    - name: INTRIC_CORS_ALLOW_ALL
+      value: "1"
+    - name: MAX_IN_QUESTION
+      value: "20"
+    - name: USING_INTRIC_PROPRIETARY
+      value: "true"
+    - name: MONITORING_ENV
+      value: "development"
+    - name: SSL_CERT_FILE
+      value: "/etc/ssl/certs/ca-certificates.crt"
+    - name: CONFLUENCE_CLIENT_ID
+      value: ""
+    - name: SHAREPOINT_CLIENT_ID
+      value: ""
+    - name: API_PREFIX
+      value: "/api/v1"
+    - name: API_KEY_LENGTH
+      value: "32"
+    - name: API_KEY_HEADER_NAME
+      value: "api-key"
+    - name: JWT_AUDIENCE
+      value: "beta"
+    - name: JWT_ISSUER
+      value: "inoolabs.com"
+    - name: JWT_EXPIRY_TIME
+      value: "10080"
+    - name: JWT_ALGORITHM
+      value: "HS256"
+    - name: JWT_SECRET
+      value: ""
+    - name: JWT_TOKEN_PREFIX
+      value: "Bearer "
+    - name: INFINITY_URL
+      value: "https://infinity.intric.ai"
+    - name: VLLM_MODEL_URL
+      value: "https://vllm.intric.ai"
+    - name: WHISPER_MODEL_URL
+      value: "https://whisper.intric.ai"
+    - name: SCALEWAY_MODEL_PROVIDER_URL
+      value: "https://api.scaleway.ai/v1"
+    - name: OAUTH_CALLBACK_URL
+      value: ""
+    - name: SHAREPOINT_WEBHOOK_URL
+      value: ""
+    - name: PARAGON_PROJECT_ID
+      value: ""
+    - name: USING_PARAGON
+      value: "false"
+    - name: BROWSER_USE_URL
+      value: ""
+    - name: BROWSER_USE_API_KEY
+      value: ""
+    - name: BROWSER_USE_HEADER
+      value: ""
+    - name: UPLOAD_FILE_TO_SESSION_MAX_SIZE
+      value: "26214400"
+    - name: UPLOAD_IMAGE_TO_SESSION_MAX_SIZE
+      value: "20971520"
+    - name: UPLOAD_MAX_FILE_SIZE
+      value: "20971520"
+    - name: TRANSCRIPTION_MAX_FILE_SIZE
+      value: "209715200"
+    - name: OPENAI_API_KEY
+      value: ""
+    - name: ANTHROPIC_API_KEY
+      value: ""
+    - name: OVHCLOUD_API_KEY
+      value: ""
+    - name: TAVILY_API_KEY
+      value: ""
+    - name: MISTRAL_API_KEY
+      value: ""
+    - name: VLLM_API_KEY
+      value: ""
+    - name: BERGET_API_KEY
+      value: ""
+    - name: EXA_API_KEY
+      value: ""
+    - name: SCALEWAY_MODEL_PROVIDER_API_KEY
+      value: ""
+    - name: LINKUP_API_KEY
+      value: ""
+    - name: INTRIC_SUPER_API_KEY
+      value: "CHANGE-ME-LONG-RANDOM-STRING"
+    - name: INTRIC_SUPER_DUPER_API_KEY
+      value: "CHANGE-ME-LONG-RANDOM-STRING"
+    - name: URL_SIGNING_KEY
+      value: "REPLACE_THIS_WITH_RANDOM_STRING"
+    - name: CONFLUENCE_CLIENT_SECRET
+      value: ""
+    - name: SHAREPOINT_CLIENT_SECRET
+      value: ""
+    - name: PARAGON_PRIVATE_KEY
+      value: ""
 
 # =============================================================================
-# OPTIONAL: Backend Worker Configuration
-# Override only if needed
+# Frontend: INTRIC_SYS_API_KEY must match backend INTRIC_SUPER_API_KEY
 # =============================================================================
-# intricBackendWorker:
-#   image: ghcr.io/inoolabs/intric-backend:v1.144.0
-#   resources:
-#     requests:
-#       cpu: 500m
-#       memory: 1Gi
+intricFrontendApp:
+  env:
+    - name: ZITADEL_INSTANCE_URL
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: ZITADEL_PROJECT_CLIENT_ID
+      value: "REPLACE_THIS_ONLY_IF_YOU_ARE_USING_EXTERNAL_ZITADEL_ELSE_THE_SETUP_ZITADEL_SCRIPT_WILL_SET_THIS_FOR_YOU"
+    - name: PROTOCOL_HEADER
+      value: "x-forwarded-proto"
+    - name: HOST_HEADER
+      value: "x-forwarded-host"
+    - name: INTRIC_SYS_API_KEY
+      value: "CHANGE-ME-LONG-RANDOM-STRING"
 
 # =============================================================================
-# OPTIONAL: Frontend App Configuration
-# Override only if needed
+# Sandboxed Python Script Runner (env list: AUTH_TOKEN, SANDBOX_IMAGE_PULL_SECRET_NAME)
 # =============================================================================
-# intricFrontendApp:
-#   image: ghcr.io/inoolabs/intric-frontend:1.75.0
-#   resources:
-#     requests:
-#       cpu: 500m
-#       memory: 1Gi
-
-# =============================================================================
-# OPTIONAL: Sandboxed Python Script Runner Configuration
-# Override only if needed
-# =============================================================================
-# sandboxedPythonScriptRunner:
-#   resources:
-#     requests:
-#       cpu: 500m
-#       memory: 512Mi
-
-# =============================================================================
-# OPTIONAL: Zitadel Configuration (Self-Hosted IAM)
-# Enable this if you want to deploy Zitadel within the cluster
-# =============================================================================
-zitadel:
-  enabled: true  # Set to false if using external Zitadel
-  externalDomain: "REPLACE_THIS"  # ex: auth.abc.intric.ai (without https://)
-  externalPort: 443
-  externalSecure: true
-  masterkey: "REPLACE_THIS_WITH_32_CHARACTER_KEY"  # Use: openssl rand -base64 32 | head -c 32
-  
-  firstInstance:
-    orgName: "REPLACE_THIS"  # ex: mycompany
-    admin:
-      # Final email will be: username@orgName.externalDomain
-      # Example: admin@mycompany.auth.abc.intric.ai
-      username: "REPLACE_THIS"  # ex: admin
-      password: "REPLACE_THIS_WITH_STRONG_PASSWORD"
-    
-    machineUser:
-      enabled: true
-      username: admin
-      name: "Automatically Initialized IAM_OWNER"
-      patExpirationDate: "2029-01-01T00:00:00Z"
-  
-  # Optional: Override database connection
-  # database:
-  #   host: intric-zitadel-postgres
-  #   port: 5432
-  #   database: zitadel
-  #   adminUsername: postgres
-  #   adminPassword: postgres
-  #   username: zitadel
-  #   password: zitadel
-
+sandboxedPythonScriptRunner:
+  env:
+    - name: AUTH_TOKEN
+      value: ""
+    - name: SANDBOX_IMAGE_PULL_SECRET_NAME
+      value: ""

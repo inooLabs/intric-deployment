@@ -144,21 +144,48 @@ if [ -n "$ZITADEL_HOST" ]; then
     ZITADEL_URL="https://${ZITADEL_HOST}"
     success "Using provided Zitadel host: $ZITADEL_HOST"
 else
-    ZITADEL_URL=$(grep "zitadelEndpoint:" "$OVERRIDE_FILE" | head -1 | sed 's/.*zitadelEndpoint: *//' | tr -d '"' | tr -d ' ')
+    # Try list-style env: intricBackendApiServer.env [ - name: ZITADEL_ENDPOINT / value: "..." ]
+    ZITADEL_URL=$(awk '
+        /^intricBackendApiServer:/ { in_backend = 1 }
+        /^[a-zA-Z]/ && !/^intricBackendApiServer:/ { if (in_backend) in_backend = 0 }
+        in_backend && /[[:space:]]+- name: ZITADEL_ENDPOINT[[:space:]]*$/ { getline; gsub(/^[[:space:]]*value:[[:space:]]*["\047]?|["\047][[:space:]]*$/, ""); gsub(/^[[:space:]]+/, ""); print; exit }
+    ' "$OVERRIDE_FILE")
+
+    # Fallback: build from ingress.zitadelHost
+    if [ -z "$ZITADEL_URL" ]; then
+        ZITADEL_HOST_FROM_FILE=$(grep -A 10 "^ingress:" "$OVERRIDE_FILE" | grep "zitadelHost:" | head -1 | sed 's/.*zitadelHost: *//' | tr -d '"' | tr -d ' ')
+        if [ -n "$ZITADEL_HOST_FROM_FILE" ]; then
+            ZITADEL_URL="https://${ZITADEL_HOST_FROM_FILE}"
+        fi
+    fi
+
+    # Legacy: old key-style zitadelEndpoint
+    if [ -z "$ZITADEL_URL" ]; then
+        ZITADEL_URL=$(grep "zitadelEndpoint:" "$OVERRIDE_FILE" | head -1 | sed 's/.*zitadelEndpoint: *//' | tr -d '"' | tr -d ' ')
+    fi
 
     if [ -z "$ZITADEL_URL" ]; then
-        error "Could not extract zitadelEndpoint from $OVERRIDE_FILE. Please provide it via --zitadelHost option."
+        error "Could not extract Zitadel URL from $OVERRIDE_FILE. Please provide it via --zitadelHost option."
     fi
-    
+
     success "Extracted Zitadel URL from override file"
 fi
 
 success "Zitadel URL: $ZITADEL_URL"
 
-SUPER_API_KEY=$(grep "intricSuperApiKey:" "$OVERRIDE_FILE" | head -1 | sed 's/.*intricSuperApiKey: *//' | sed 's/^"\(.*\)"$/\1/' | tr -d ' ')
+# Extract Super API Key: list-style intricBackendApiServer.env (INTRIC_SUPER_API_KEY) or legacy intricSuperApiKey
+SUPER_API_KEY=$(awk '
+    /^intricBackendApiServer:/ { in_backend = 1 }
+    /^[a-zA-Z]/ && !/^intricBackendApiServer:/ { if (in_backend) in_backend = 0 }
+    in_backend && /[[:space:]]+- name: INTRIC_SUPER_API_KEY[[:space:]]*$/ { getline; gsub(/^[[:space:]]*value:[[:space:]]*["\047]?|["\047][[:space:]]*$/, ""); gsub(/^[[:space:]]+/, ""); print; exit }
+' "$OVERRIDE_FILE")
 
 if [ -z "$SUPER_API_KEY" ]; then
-    error "Could not extract intricSuperApiKey from $OVERRIDE_FILE"
+    SUPER_API_KEY=$(grep "intricSuperApiKey:" "$OVERRIDE_FILE" | head -1 | sed 's/.*intricSuperApiKey: *//' | sed 's/^"\(.*\)"$/\1/' | tr -d ' ')
+fi
+
+if [ -z "$SUPER_API_KEY" ]; then
+    error "Could not extract INTRIC_SUPER_API_KEY (or legacy intricSuperApiKey) from $OVERRIDE_FILE"
 fi
 
 success "Super API Key found"
@@ -172,11 +199,6 @@ info "Fetching Zitadel organization information..."
 ME_RESPONSE=$(curl -s -X GET "${ZITADEL_URL}/auth/v1/users/me" \
     -H "Authorization: Bearer ${ZITADEL_PAT}" \
     -H "Content-Type: application/json")
-
-# echo response, url, and pat
-echo "Response: $ME_RESPONSE"
-echo "URL: $ZITADEL_URL"
-echo "PAT: $ZITADEL_PAT"
 
 ZITADEL_ORG_ID=$(echo "$ME_RESPONSE" | jq -r '.user.details.resourceOwner' 2>/dev/null)
 
