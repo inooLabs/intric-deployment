@@ -140,18 +140,23 @@ else
     # Extract from override file
     info "Extracting Zitadel URL from input override file..."
 
-    # Try to extract from zitadel.externalDomain
-    ZITADEL_DOMAIN=$(grep -A 5 "^zitadel:" "$OVERRIDE_FILE_IN" | grep "externalDomain:" | head -1 | sed 's/.*externalDomain: *//' | tr -d '"' | tr -d ' ')
+    # Try ingress.zitadelHost first (single-line key)
+    ZITADEL_DOMAIN=$(grep -A 10 "^ingress:" "$OVERRIDE_FILE_IN" | grep "zitadelHost:" | head -1 | sed 's/.*zitadelHost: *//' | tr -d '"' | tr -d ' ')
 
-    # If not found, try ingress.zitadelHost
+    # If not found, try zitadel.env list (ZITADEL_EXTERNALDOMAIN)
     if [ -z "$ZITADEL_DOMAIN" ]; then
-        ZITADEL_DOMAIN=$(grep -A 10 "^ingress:" "$OVERRIDE_FILE_IN" | grep "zitadelHost:" | head -1 | sed 's/.*zitadelHost: *//' | tr -d '"' | tr -d ' ')
+        ZITADEL_DOMAIN=$(awk '/^zitadel:/{ found=1 } found && /ZITADEL_EXTERNALDOMAIN/{ getline; gsub(/.*value: *["\047]?|["\047].*$/,""); gsub(/^[ \t]+/,""); print; exit }' "$OVERRIDE_FILE_IN")
+    fi
+
+    # Legacy: try old key-style zitadel.externalDomain
+    if [ -z "$ZITADEL_DOMAIN" ]; then
+        ZITADEL_DOMAIN=$(grep -A 5 "^zitadel:" "$OVERRIDE_FILE_IN" | grep "externalDomain:" | head -1 | sed 's/.*externalDomain: *//' | tr -d '"' | tr -d ' ')
     fi
 
     if [ -z "$ZITADEL_DOMAIN" ]; then
         error "Could not extract Zitadel domain from $OVERRIDE_FILE_IN. Please provide it via --zitadelHost option."
     fi
-    
+
     success "Extracted Zitadel domain from override file"
 fi
 
@@ -342,52 +347,94 @@ fi
 
 info "Creating output override file with updated configuration..."
 
-# Use sed to update the values
-# This is a bit tricky because we need to preserve indentation and structure
-# We'll update the intricBackendApiServer section
-
-# Read through the file and update the zitadel values
+# Update override file: env is now a list of { name, value } (e.g. - name: ZITADEL_ENDPOINT / value: "...")
+# We replace the line after "- name: VAR" with the new value line for Zitadel-related vars.
+# Backend: intricBackendApiServer.env. Frontend: intricFrontendApp.env (ZITADEL_INSTANCE_URL, ZITADEL_PROJECT_CLIENT_ID).
 awk -v zitadel_endpoint="$ZITADEL_URL" \
     -v project_id="$PROJECT_ID" \
     -v client_id="$CLIENT_ID" \
     -v pat="$ZITADEL_PAT" '
-BEGIN { in_backend_section = 0; in_env_section = 0 }
+BEGIN { in_backend_section = 0; in_env_section = 0; in_frontend_section = 0; in_frontend_env_section = 0; skip_next = 0 }
 # Detect when we enter intricBackendApiServer section
-/^intricBackendApiServer:/ { in_backend_section = 1 }
-# Exit backend section when we hit another top-level key (no leading spaces)
-/^[a-zA-Z]/ && !/^intricBackendApiServer:/ && in_backend_section { in_backend_section = 0; in_env_section = 0 }
-# Enter env section when we find "  env:" (2 spaces indent)
+/^intricBackendApiServer:/ { in_backend_section = 1; in_frontend_section = 0 }
+# Detect when we enter intricFrontendApp section
+/^intricFrontendApp:/ { in_frontend_section = 1; in_backend_section = 0 }
+# Exit backend/frontend when we hit another top-level key
+/^[a-zA-Z]/ && !/^intricBackendApiServer:/ && !/^intricFrontendApp:/ {
+    if (in_backend_section) in_backend_section = 0; in_env_section = 0
+    if (in_frontend_section) in_frontend_section = 0; in_frontend_env_section = 0
+    skip_next = 0
+}
+# Backend env
 in_backend_section && /^  env:/ { in_env_section = 1 }
-# Exit env section when we hit another key at the same level as env (2 spaces, but not part of env content)
-# This pattern looks for lines starting with exactly 2 spaces followed by a letter and colon (sibling to env:)
 in_backend_section && /^  [a-zA-Z][^:]*:/ && !/^  env:/ && in_env_section { in_env_section = 0 }
+# Frontend env
+in_frontend_section && /^  env:/ { in_frontend_env_section = 1 }
+in_frontend_section && /^  [a-zA-Z][^:]*:/ && !/^  env:/ && in_frontend_env_section { in_frontend_env_section = 0 }
 
-in_env_section && /zitadelEndpoint:/ {
-    print "    zitadelEndpoint: " zitadel_endpoint
+skip_next { skip_next = 0; next }
+
+# intricBackendApiServer.env: list-style - name: VAR / value: ...
+in_env_section && /^[[:space:]]+- name: ZITADEL_ENDPOINT[[:space:]]*$/ {
+    print
+    print "      value: \"" zitadel_endpoint "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelOpenidConfigEndpoint:/ {
-    print "    zitadelOpenidConfigEndpoint: " zitadel_endpoint "/.well-known/openid-configuration"
+in_env_section && /^[[:space:]]+- name: ZITADEL_OPENID_CONFIG_ENDPOINT[[:space:]]*$/ {
+    print
+    print "      value: \"" zitadel_endpoint "/.well-known/openid-configuration" "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelProjectClientId:/ {
-    print "    zitadelProjectClientId: \"" client_id "\""
+in_env_section && /^[[:space:]]+- name: ZITADEL_PROJECT_CLIENT_ID[[:space:]]*$/ {
+    print
+    print "      value: \"" client_id "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelProjectId:/ {
-    print "    zitadelProjectId: \"" project_id "\""
+in_env_section && /^[[:space:]]+- name: ZITADEL_PROJECT_ID[[:space:]]*$/ {
+    print
+    print "      value: \"" project_id "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelKeyEndpoint:/ {
-    print "    zitadelKeyEndpoint: " zitadel_endpoint "/oauth/v2/keys"
+in_env_section && /^[[:space:]]+- name: ZITADEL_KEY_ENDPOINT[[:space:]]*$/ {
+    print
+    print "      value: \"" zitadel_endpoint "/oauth/v2/keys" "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelAudience:/ {
-    print "    zitadelAudience: \"" client_id "\""
+in_env_section && /^[[:space:]]+- name: ZITADEL_AUDIENCE[[:space:]]*$/ {
+    print
+    print "      value: \"" client_id "\""
+    skip_next = 1
     next
 }
-in_env_section && /zitadelAccessToken:/ {
-    print "    zitadelAccessToken: " pat
+in_env_section && /^[[:space:]]+- name: ZITADEL_ISSUER[[:space:]]*$/ {
+    print
+    print "      value: \"" zitadel_endpoint "\""
+    skip_next = 1
+    next
+}
+in_env_section && /^[[:space:]]+- name: ZITADEL_ACCESS_TOKEN[[:space:]]*$/ {
+    print
+    print "      value: \"" pat "\""
+    skip_next = 1
+    next
+}
+
+# intricFrontendApp.env: ZITADEL_INSTANCE_URL, ZITADEL_PROJECT_CLIENT_ID
+in_frontend_env_section && /^[[:space:]]+- name: ZITADEL_INSTANCE_URL[[:space:]]*$/ {
+    print
+    print "      value: \"" zitadel_endpoint "\""
+    skip_next = 1
+    next
+}
+in_frontend_env_section && /^[[:space:]]+- name: ZITADEL_PROJECT_CLIENT_ID[[:space:]]*$/ {
+    print
+    print "      value: \"" client_id "\""
+    skip_next = 1
     next
 }
 { print }
