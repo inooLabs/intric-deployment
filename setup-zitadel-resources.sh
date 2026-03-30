@@ -317,7 +317,7 @@ if [ "$SKIP_CREATION" = "false" ]; then
             \"authMethodType\": \"OIDC_AUTH_METHOD_TYPE_NONE\",
             \"version\": \"OIDC_VERSION_1_0\",
             \"devMode\": false,
-            \"accessTokenType\": \"OIDC_TOKEN_TYPE_BEARER\",
+            \"accessTokenType\": \"OIDC_TOKEN_TYPE_JWT\",
             \"idTokenRoleAssertion\": true,
             \"idTokenUserinfoAssertion\": true,
             \"clockSkew\": \"0s\",
